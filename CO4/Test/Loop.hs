@@ -1,15 +1,62 @@
-{-# OPTIONS_CO4 SizedList Nat6 (SizedStep Nat6 Nat6 Nat6 Nat6) #-}
+{-# OPTIONS_CO4 SizedList Nat50 (SizedStep Nat15 Nat4 Nat4 Nat15) #-}
 
 -- should find the looping derivation
 -- abb -> bbaab -> bbabbaa
 
-main d = looping_derivation rs d
+main d = looping_derivation g03 d
 
 -- rewriting system  ab -> bbaa.
 
-rs = RS (Cons (Rule (Cons A(Cons B (Cons B Nil)))
+rs1 = RS (Cons (Rule (Cons A(Cons B (Cons B Nil)))
                     (Cons B(Cons B (Cons A (Cons A (Cons B Nil))))))
           Nil)
+
+
+-- has loop of length 15, cf.
+-- http://termcomp.uibk.ac.at/termcomp/competition/resultDetail.seam?resultId=288357&cid=3093
+g03 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons A(Cons A(Cons B(Cons B Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
+               (Cons A(Cons A(Cons B(Cons A Nil)))))
+         Nil))
+
+-- no known loop (?)
+g06 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons A(Cons B(Cons A(Cons B Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
+               (Cons A(Cons B(Cons A(Cons A Nil)))))
+         Nil))
+
+g10 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons A(Cons B(Cons B(Cons B Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
+               (Cons A(Cons A(Cons B(Cons A Nil)))))
+         Nil))
+
+g13 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons A(Cons B(Cons B(Cons B Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons B(Cons B Nil))))
+               (Cons A(Cons B(Cons B(Cons A Nil)))))
+         Nil))
+
+g19 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons B(Cons A(Cons B(Cons B Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
+               (Cons A(Cons A(Cons B(Cons A Nil)))))
+         Nil))
+
+g20 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons B(Cons A(Cons B(Cons B Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
+               (Cons A(Cons B(Cons A(Cons A Nil)))))
+         Nil))
+
 
 data Bool = False | True
 
