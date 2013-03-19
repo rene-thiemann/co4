@@ -23,6 +23,8 @@ data Step = Step { prefix :: List Sigma
                  , suffix :: List Sigma
                  }
 
+data OStep = OStep Rule Overlap 
+
 data Side = Left | Right
 
 data Overlap = Overlap { side :: Side, pre :: Word, suf :: Word, c1 :: Rule, c2 :: Rule }
@@ -45,7 +47,7 @@ data Image = Image { power :: List (List Sigma) -- ^  phi^k (start)
                    }
 
 
-derives [makeToDoc] [''Sigma, ''Rule, ''Step, ''Side, ''Overlap, ''Move, ''Transport, ''Image]
+derives [makeToDoc] [''Sigma, ''Rule, ''Step, ''OStep, ''Side, ''Overlap, ''Move, ''Transport, ''Image]
 
-instance Show (List Step) where show = render . toDoc
+instance Show (List OStep) where show = render . toDoc
 instance Show Transport where show = render . toDoc

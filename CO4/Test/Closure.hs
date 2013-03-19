@@ -1,16 +1,23 @@
 {-# OPTIONS_CO4 
-  SizedList Nat20 (SizedStep Nat20 Nat20 Nat10 Nat10 Nat20 Nat20 Nat20 Nat20 ) 
+  SizedList Nat10 (SizedOStep Nat20 Nat20 Nat10 Nat10 Nat20 Nat20 Nat20 Nat20 ) 
 #-}
 
 -- import qualified Prelude ; undefined = Prelude.undefined
 
-main d = looping_derivation g05 d
+main d = looping_derivation rs1 d
 
 -- rewriting system  ab -> bbaa.
 
 rs1 = RS (Cons (Rule (Cons A(Cons B Nil))
                     (Cons B(Cons B (Cons A (Cons A Nil)))) )
           Nil)
+
+s12a2n7 = RS
+    (Cons (Rule (Cons A(Cons A (Cons A Nil))) 
+                Nil)
+    (Cons (Rule (Cons B (Cons A(Cons B (Cons B Nil))))
+                (Cons A(Cons B(Cons B(Cons B(Cons A Nil))))))
+          Nil))
 
 e08 = RS 
    (Cons (Rule (Cons A(Cons A(Cons B(Cons B Nil))))
@@ -185,14 +192,14 @@ overlap_ok c o = case o of
                        ( and2 (eqListSigma (append pre (append r1 suf)) l2)
                             (eqListSigma r2 r ) )
         
-data Step = Step Rule Overlap 
+data OStep = OStep Rule Overlap 
 -- type Derivation = List Step
 
 derivation_ok rs d = case d of
     Nil -> True
     Cons step ss -> 
        and2 ( case step of 
-            Step c o -> or2 (extension_ok c o ss) (base_ok rs c) )
+            OStep c o -> or2 (extension_ok c o ss) (base_ok rs c) )
             ( derivation_ok rs ss )
                       
 base_ok rs c = case rs of
@@ -200,8 +207,8 @@ base_ok rs c = case rs of
 
 extension_ok c o ss = case o of
                  Overlap side pre suf c1 c2 -> 
-                    and2 ( exists ss ( \ s -> case s of Step c o -> eqCls c c1 ) )
-                     ( and2 ( exists ss ( \ s -> case s of Step c o -> eqCls c c2 ) )
+                    and2 ( exists ss ( \ s -> case s of OStep c o -> eqCls c c1 ) )
+                     ( and2 ( exists ss ( \ s -> case s of OStep c o -> eqCls c c2 ) )
                         ( overlap_ok c o ) ) 
 
 eqCls c1 c2 = case c1 of
@@ -215,6 +222,6 @@ looping_derivation rs d =
 self_embedding_derivation d =  case d of
               Nil -> False
               Cons step ss -> case step of
-                  Step c o -> case c of
+                  OStep c o -> case c of
                       Rule l r -> factor l r
 
