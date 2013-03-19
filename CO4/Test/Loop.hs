@@ -1,4 +1,4 @@
-{-# OPTIONS_CO4 SizedList Nat50 (SizedStep Nat15 Nat4 Nat4 Nat15) #-}
+{-# OPTIONS_CO4 SizedList Nat80 (SizedStep Nat16 Nat4 Nat4 Nat16) #-}
 
 -- should find the looping derivation
 -- abb -> bbaab -> bbabbaa
@@ -151,10 +151,16 @@ data Step = Step (List Sigma) -- prefix
 -- type Derivation = List Step
 
 looping_derivation rs d =
-   and2 (derivation_is_nonempty d)
+  and2 (break_symmetry d)
+   ( and2 (derivation_is_nonempty d)
     ( and2 (derivation_uses_rules rs d)
       (and2 (derivation_is_joinable d)
-           (derivation_is_looping d)))
+           (derivation_is_looping d))))
+
+break_symmetry d = case d of
+    Nil -> False
+    Cons s ss -> case s of
+        Step pre r suf -> null pre
 
 derivation_uses_rules rs d = case rs of
     RS rules -> forall d
