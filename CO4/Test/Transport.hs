@@ -1,4 +1,4 @@
-{-# OPTIONS_CO4 SizedTransport Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat8 Nat8 Nat5 Nat8 Nat5 #-}
+{-# OPTIONS_CO4 SizedTransport Nat3 Nat3 Nat3 Nat3 Nat3 Nat3 Nat6 Nat6 Nat6 Nat6 Nat6 Nat6 Nat6 Nat6 Nat6 Nat6 #-}
 
 -- looping transport system, see "Lindenmayer Loops"
 -- http://www.imn.htwk-leipzig.de/~waldmann/talk/07/ajrw/
@@ -15,6 +15,18 @@ r2 = RS (Cons (Rule (Cons B (Cons A (Cons A Nil)))
 hw1 = RS 
     (Cons (Rule (Cons C(Cons B Nil)) (Cons B(Cons B(Cons A Nil))))
     (Cons (Rule (Cons A(Cons B Nil)) (Cons B(Cons C(Cons A Nil))))
+          Nil))
+
+s11a3n1 = RS
+    (Cons (Rule (Cons A Nil) Nil)
+    (Cons (Rule (Cons A(Cons B Nil)) (Cons C Nil))
+    (Cons (Rule (Cons C(Cons C Nil)) (Cons B(Cons C(Cons B(Cons A(Cons A Nil))))))
+          Nil)))
+
+s11a3n15 = RS
+    (Cons (Rule (Cons A(Cons C Nil)) Nil)
+    (Cons (Rule (Cons A(Cons A (Cons B Nil))) 
+                (Cons B(Cons C(Cons B(Cons A(Cons A (Cons A Nil)))))))
           Nil))
 
 
