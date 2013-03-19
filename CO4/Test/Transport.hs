@@ -1,10 +1,56 @@
-{-# OPTIONS_CO4 
-  SizedList Nat20 (SizedStep Nat20 Nat20 Nat10 Nat10 Nat20 Nat20 Nat20 Nat20 ) 
-#-}
+{-# OPTIONS_CO4 SizedTransport Nat3 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 #-}
+
+-- looping transport system, see "Lindenmayer Loops"
+-- http://www.imn.htwk-leipzig.de/~waldmann/talk/07/ajrw/
 
 -- import qualified Prelude ; undefined = Prelude.undefined
 
-main d = looping_derivation g05 d
+main ts = transport_system r2 ts
+
+-- Geser's system R_2 (slide 24)
+r2 = RS (Cons (Rule (Cons B (Cons A (Cons A Nil)))
+                    (Cons A(Cons A (Cons B(Cons B(Cons A Nil)))))) Nil)
+
+data Move = Move (List Sigma) -- ^ origin (block letter)
+                 (List (List Sigma)) -- ^ image (concatenation of block letters)
+                 (List Step)  -- ^ origin . pivot ->> pivot . image
+
+-- type Morphism = (List Move)
+
+data Transport = Transport (List Sigma) -- ^ pivot
+                           (List Move)  -- ^ morphism
+                           (List Sigma) -- ^ start
+                           (List (List Sigma)) -- ^ iterated images
+
+transport_system r ts = case ts of 
+    Transport pivot morphism start images -> 
+        and2 (nontrivial start morphism)
+      (  and2 (morphism_ok pivot r morphism) 
+        True )
+
+nontrivial start morphism = case morphism of
+    Nil -> False
+    Cons move moves -> case move of
+        Move orig imag derive -> 
+             and2 (eqListSigma start orig) (not (null derive))
+
+morphism_ok p r morph = 
+   and2 (forall morph ( move_ok p r ))
+        (forall morph (blocks_ok morph))
+
+blocks_ok morph move = case move of
+    Move orig imag derive -> 
+        forall imag ( \ block -> exists morph ( \ m -> case m of
+            Move o i d -> eqListSigma o block ) )
+
+move_ok p r move = case move of
+    Move orig imag derive -> and2 (not (null orig)) ( case derive of
+        Nil -> eqListSigma (append orig p) (append p (concat imag))
+        Cons x xs -> 
+            and2 (eqListSigma (append orig p) (left_semantics (head derive)))
+          ( and2 ( eqListSigma (append p (concat imag)) (right_semantics (last derive)))
+          ( and2 (derivation_for_system r derive ) True ) )
+                )
 
 -- rewriting system  ab -> bbaa.
 
@@ -19,7 +65,7 @@ e08 = RS
                (Cons A(Cons A(Cons A(Cons A Nil)))))
          Nil))
 
--- Loop of length 15 starting with a string of length 12
+-- has loop of length 15, cf.
 -- http://termcomp.uibk.ac.at/termcomp/competition/resultDetail.seam?resultId=288357&cid=3093
 g03 = RS 
    (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
@@ -36,6 +82,8 @@ g05 = RS
          Nil))
 
 -- KnockedForLoops: Loop of length 27 starting with a string of length 15
+-- OK, der wird auch gefunden (!) mit:
+-- {-# OPTIONS_CO4 SizedList Nat30 (SizedStep Nat11 Nat4 Nat4 Nat11) #-}
 g06 = RS 
    (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
                (Cons A(Cons B(Cons A(Cons B Nil)))))
@@ -121,6 +169,10 @@ eqListSigma xs ys = case xs of
         Cons y ys -> 
             and2 (eqSigma x y) (eqListSigma xs ys)
 
+concat xss = case xss of
+    Nil -> Nil
+    Cons xs xss -> append xs (concat xss)
+
 append xs ys = case xs of
     Nil -> ys
     Cons x xs -> Cons x (append xs ys)
@@ -158,63 +210,64 @@ eqRule u1 u2 = case u1 of
 
 data RS = RS (List Rule)
 
+data Step = Step (List Sigma) -- prefix
+                 Rule
+                 (List Sigma) -- suffix
 
--- | a closure is a non-empty derivation
--- data Closure = Closure (List Sigma) (List Sigma)
--- but re re-use data Rule here
-
-data Side = Left | Right | Inside | Outside
-
-data Overlap = Overlap Side (List Sigma) (List Sigma) Rule Rule
-
-overlap_ok c o = case o of
-    Overlap side pre suf c1 c2 -> case c of
-        Rule l r -> case c1 of
-            Rule l1 r1 -> case c2 of
-                Rule l2 r2 -> case side of
-                    Left -> and2 (eqListSigma l (append pre l1))
-                       ( and2 (eqListSigma (append pre r1) (append l2 suf))
-                            (eqListSigma (append r2 suf) r) )
-                    Right -> and2 (eqListSigma l (append l1 suf))
-                       ( and2 (eqListSigma (append r1 suf) (append pre l2))
-                            (eqListSigma (append pre r2) r) )        
-                    Inside -> and2 (eqListSigma l l1)
-                       ( and2 (eqListSigma r1 (append pre (append l2 suf)))
-                            (eqListSigma (append pre (append r2 suf)) r) )
-                    Outside -> and2 (eqListSigma l (append pre (append l1 suf)))
-                       ( and2 (eqListSigma (append pre (append r1 suf)) l2)
-                            (eqListSigma r2 r ) )
-        
-data Step = Step Rule Overlap 
 -- type Derivation = List Step
 
-derivation_ok rs d = case d of
+looping_derivation rs d =
+  and2 (break_symmetry d)
+   ( and2 (derivation_is_nonempty d)
+    ( and2 (derivation_uses_rules rs d)
+      (and2 (derivation_is_joinable d)
+           (derivation_is_looping d))))
+
+derivation_for_system rs d = 
+   and2 (derivation_is_nonempty d)
+    ( and2 (derivation_uses_rules rs d)
+      (and2 (derivation_is_joinable d) True ) )
+
+break_symmetry d = case d of
+    Nil -> False
+    Cons s ss -> case s of
+        Step pre r suf -> null pre
+
+derivation_uses_rules rs d = case rs of
+    RS rules -> forall d
+        ( \ s -> step_uses_rules rules s )
+
+derivation_is_nonempty d = not (null d)
+
+derivation_is_looping d = 
+      factor (left_semantics (head d))
+           (right_semantics (last d))
+
+derivation_is_joinable d = case d of
     Nil -> True
-    Cons step ss -> 
-       and2 ( case step of 
-            Step c o -> or2 (extension_ok c o ss) (base_ok rs c) )
-            ( derivation_ok rs ss )
-                      
-base_ok rs c = case rs of
-    RS us -> exists us ( \ u -> eqCls u c )
+    Cons s1 later1 -> case later1 of
+        Nil -> True
+        Cons s2 later2 -> 
+            and2 (joinable_steps s1 s2)
+                 (derivation_is_joinable later1)
 
-extension_ok c o ss = case o of
-                 Overlap side pre suf c1 c2 -> 
-                    and2 ( exists ss ( \ s -> case s of Step c o -> eqCls c c1 ) )
-                     ( and2 ( exists ss ( \ s -> case s of Step c o -> eqCls c c2 ) )
-                        ( overlap_ok c o ) ) 
+-- TODO: this is what I want to write:
+-- right_semantics (Step p (Rule l r) s) = 
+--    append p (append r s)
 
-eqCls c1 c2 = case c1 of
-      Rule l1 r1 -> case c2 of
-          Rule l2 r2 -> and2 (eqListSigma l1 l2) (eqListSigma r1 r2)
+left_semantics step = case step of
+    Step p u s -> case u of
+        Rule l r -> append p (append l s)
 
-looping_derivation rs d = 
-     and2 ( derivation_ok rs d ) 
-        ( self_embedding_derivation d )
+right_semantics step = case step of
+    Step p u s -> case u of
+        Rule l r -> append p (append r s)
 
-self_embedding_derivation d =  case d of
-              Nil -> False
-              Cons step ss -> case step of
-                  Step c o -> case c of
-                      Rule l r -> factor l r
+joinable_steps step1 step2 = 
+    eqListSigma (right_semantics step1)
+                (left_semantics  step2)
+
+step_uses_rules rules step = case step of
+   Step p u s -> 
+       exists rules ( \ v -> eqRule u v )
 
