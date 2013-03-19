@@ -1,15 +1,22 @@
-{-# OPTIONS_CO4 SizedTransport Nat3 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 #-}
+{-# OPTIONS_CO4 SizedTransport Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat8 Nat8 Nat5 Nat8 Nat5 #-}
 
 -- looping transport system, see "Lindenmayer Loops"
 -- http://www.imn.htwk-leipzig.de/~waldmann/talk/07/ajrw/
 
 -- import qualified Prelude ; undefined = Prelude.undefined
 
-main ts = transport_system r2 ts
+main ts = transport_system hw1 ts
 
 -- Geser's system R_2 (slide 24)
 r2 = RS (Cons (Rule (Cons B (Cons A (Cons A Nil)))
                     (Cons A(Cons A (Cons B(Cons B(Cons A Nil)))))) Nil)
+
+-- HofWald1 (slide 22)
+hw1 = RS 
+    (Cons (Rule (Cons C(Cons B Nil)) (Cons B(Cons B(Cons A Nil))))
+    (Cons (Rule (Cons A(Cons B Nil)) (Cons B(Cons C(Cons A Nil))))
+          Nil))
+
 
 data Move = Move (List Sigma) -- ^ origin (block letter)
                  (List (List Sigma)) -- ^ image (concatenation of block letters)
@@ -186,15 +193,21 @@ not x  = case x of
     False -> True
     True -> False
 
-data Sigma = A | B
+data Sigma = A | B | C
 
 eqSigma x y = case x of
     A -> case y of
         A -> True
         B -> False
+        C -> False
     B -> case y of
         A -> False
         B -> True
+        C -> False
+    C -> case y of
+        A -> False
+        B -> False
+        C -> True
 
 data List a = Nil | Cons a (List a)
 

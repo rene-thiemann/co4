@@ -12,7 +12,7 @@ toList l = case l of
 instance ToDoc a => ToDoc (List a) where
     toDoc = toDoc . toList
 
-data Sigma = A | B 
+data Sigma = A | B | C | D
 
 type Word = List Sigma
 
