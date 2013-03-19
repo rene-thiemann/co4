@@ -1,10 +1,10 @@
 {-# OPTIONS_CO4 
-  SizedList Nat3 (SizedOStep Nat15 Nat15 Nat15 Nat15 Nat15 Nat15 Nat15 Nat15 ) 
+  SizedList Nat15 (SizedOStep Nat12 Nat12 Nat12 Nat12 Nat12 Nat12 Nat12 Nat12 ) 
 #-}
 
 -- import qualified Prelude ; undefined = Prelude.undefined
 
-main d = looping_derivation r2 d
+main d = looping_derivation g08 d
 
 -- rewriting system  ab -> bbaa.
 
