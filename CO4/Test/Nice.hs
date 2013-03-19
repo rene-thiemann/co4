@@ -37,10 +37,15 @@ data Move = Move { origin :: List Sigma
 data Transport = Transport { pivot :: List Sigma
                            , morphism :: List Move
                            , start :: List Sigma
-                           , iterated :: List (List Sigma)
+                           , images :: List Image
                            }
 
-derives [makeToDoc] [''Sigma, ''Rule, ''Step, ''Side, ''Overlap, ''Move, ''Transport]
+data Image = Image { power :: List (List Sigma) -- ^  phi^k (start)
+                   , seed :: List (List Sigma) -- ^  start ^ pivot^k
+                   }
+
+
+derives [makeToDoc] [''Sigma, ''Rule, ''Step, ''Side, ''Overlap, ''Move, ''Transport, ''Image]
 
 instance Show (List Step) where show = render . toDoc
 instance Show Transport where show = render . toDoc

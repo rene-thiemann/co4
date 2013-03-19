@@ -1,4 +1,4 @@
-{-# OPTIONS_CO4 SizedTransport Nat3 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 #-}
+{-# OPTIONS_CO4 SizedTransport Nat3 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 Nat5 #-}
 
 -- looping transport system, see "Lindenmayer Loops"
 -- http://www.imn.htwk-leipzig.de/~waldmann/talk/07/ajrw/
@@ -20,13 +20,65 @@ data Move = Move (List Sigma) -- ^ origin (block letter)
 data Transport = Transport (List Sigma) -- ^ pivot
                            (List Move)  -- ^ morphism
                            (List Sigma) -- ^ start
-                           (List (List Sigma)) -- ^ iterated images
+                           (List Image)
+
+data Image = Image (List (List Sigma)) -- ^  phi^k (start)
+                   ( List (List Sigma)) -- ^  start ^ pivot^k
 
 transport_system r ts = case ts of 
     Transport pivot morphism start images -> 
         and2 (nontrivial start morphism)
       (  and2 (morphism_ok pivot r morphism) 
-        True )
+        ( and2 (front_embedding images)
+          ( images_ok pivot morphism start images ) ) )
+
+front_embedding images = case images of
+    Nil -> False
+    Cons i is -> case is of
+        Nil -> False
+        Cons j js -> case i of
+            Image w s -> subword s w
+
+-- | this should be cached!
+subword s w = case s of
+    Nil -> True
+    Cons x xs -> case w of
+        Nil -> False
+        Cons y ys -> case eqListSigma x y of
+            False -> subword s ys
+            True -> subword xs ys
+
+images_ok pivot morphism start images = 
+    case images of
+        Nil -> False
+        Cons i is -> case i of
+            Image w s -> case is of
+                Nil -> and2 (eqListListSigma w (Cons start Nil)) 
+                            (eqListListSigma s (Cons start Nil))
+                Cons j js -> case j of
+                    Image ww ss -> 
+                        and2 ( eqListListSigma w (apply morphism ww) )
+                      ( and2 ( eqListListSigma s (append ss (Cons pivot Nil)))
+                             ( images_ok pivot morphism start is ) )
+
+apply morphism w = concat ( map (apply_to_letter morphism) w )
+
+apply_to_letter morphism x = case morphism of
+    Nil -> undefined
+    Cons m ms -> case m of
+        Move orig imag derive -> case eqListSigma orig x of
+            False -> apply_to_letter ms x
+            True  -> imag
+
+                    
+eqListListSigma xs ys = case xs of
+    Nil -> case ys of
+        Nil -> True
+        Cons y ys -> False
+    Cons x xs -> case ys of
+        Nil -> False
+        Cons y ys -> and2 (eqListSigma x y) (eqListListSigma xs ys)
+
 
 nontrivial start morphism = case morphism of
     Nil -> False
