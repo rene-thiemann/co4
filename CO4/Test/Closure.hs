@@ -1,8 +1,10 @@
-{-# OPTIONS_CO4 SizedList Nat10 (SizedStep Nat10 Nat10 Nat10 Nat10 Nat10 Nat10 Nat10 Nat10 ) #-}
+{-# OPTIONS_CO4 
+  SizedList Nat15 (SizedStep Nat10 Nat10 Nat10 Nat10 Nat10 Nat10 Nat10 Nat10 ) 
+#-}
 
 -- import qualified Prelude ; undefined = Prelude.undefined
 
-main d = looping_derivation rs1 d
+main d = looping_derivation g03 d
 
 -- rewriting system  ab -> bbaa.
 
@@ -11,7 +13,7 @@ rs1 = RS (Cons (Rule (Cons A(Cons B Nil))
           Nil)
 
 
--- has loop of length 15, cf.
+-- Loop of length 15 starting with a string of length 12
 -- http://termcomp.uibk.ac.at/termcomp/competition/resultDetail.seam?resultId=288357&cid=3093
 g03 = RS 
    (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
@@ -148,7 +150,7 @@ data RS = RS (List Rule)
 -- data Closure = Closure (List Sigma) (List Sigma)
 -- but re re-use data Rule here
 
-data Side = Left | Right
+data Side = Left | Right | Inside | Outside
 
 data Overlap = Overlap Side (List Sigma) (List Sigma) Rule Rule
 
@@ -157,12 +159,18 @@ overlap_ok c o = case o of
         Rule l r -> case c1 of
             Rule l1 r1 -> case c2 of
                 Rule l2 r2 -> case side of
-                    Right -> and2 (eqListSigma l (append l1 suf))
-                       ( and2 (eqListSigma (append r1 suf) (append pref l2))
-                            (eqListSigma (append pref r2) r) )
                     Left -> and2 (eqListSigma l (append pref l1))
                        ( and2 (eqListSigma (append pref r1) (append l2 suf))
                             (eqListSigma (append r2 suf) r) )
+                    Right -> and2 (eqListSigma l (append l1 suf))
+                       ( and2 (eqListSigma (append r1 suf) (append pref l2))
+                            (eqListSigma (append pref r2) r) )        
+                    Inside -> and2 (eqListSigma l l1)
+                       ( and2 (eqListSigma r1 (append pre (append l2 suf)))
+                            (eqListSigma (append pre (append r2 suf)) r) )
+                    Outside -> and2 (eqListSigma l (append pre (append l1 suf)))
+                       ( and2 (eqListSigma (append pre (append r1 suf)) l2)
+                            (eqListSigma r2 r ) )
         
 data Step = Step Rule Overlap 
 -- type Derivation = List Step
