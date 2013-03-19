@@ -1,16 +1,34 @@
 {-# OPTIONS_CO4 
-  SizedList Nat10 (SizedOStep Nat20 Nat20 Nat10 Nat10 Nat20 Nat20 Nat20 Nat20 ) 
+  SizedList Nat3 (SizedOStep Nat15 Nat15 Nat15 Nat15 Nat15 Nat15 Nat15 Nat15 ) 
 #-}
 
 -- import qualified Prelude ; undefined = Prelude.undefined
 
-main d = looping_derivation rs1 d
+main d = looping_derivation r2 d
 
 -- rewriting system  ab -> bbaa.
 
 rs1 = RS (Cons (Rule (Cons A(Cons B Nil))
                     (Cons B(Cons B (Cons A (Cons A Nil)))) )
           Nil)
+
+
+-- Geser's system R_2 (slide 24)
+r2 = RS (Cons (Rule (Cons B (Cons A (Cons A Nil)))
+                    (Cons A(Cons A (Cons B(Cons B(Cons A Nil)))))) Nil)
+
+-- HofWald1 (slide 22)
+hw1 = RS 
+    (Cons (Rule (Cons C(Cons B Nil)) (Cons B(Cons B(Cons A Nil))))
+    (Cons (Rule (Cons A(Cons B Nil)) (Cons B(Cons C(Cons A Nil))))
+          Nil))
+
+uni2 = RS
+    (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+                (Cons A(Cons C(Cons A(Cons C(Cons C Nil))))))
+    (Cons (Rule (Cons C(Cons C(Cons C Nil)))
+                (Cons A(Cons A(Cons A Nil))))
+          Nil))
 
 s12a2n7 = RS
     (Cons (Rule (Cons A(Cons A (Cons A Nil))) 
@@ -48,6 +66,13 @@ g06 = RS
                (Cons A(Cons B(Cons A(Cons B Nil)))))
    (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
                (Cons A(Cons B(Cons A(Cons A Nil)))))
+         Nil))
+
+g08 = RS 
+   (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
+               (Cons A(Cons B(Cons B(Cons A Nil)))))
+   (Cons (Rule (Cons B(Cons A(Cons A(Cons B Nil))))
+               (Cons A(Cons A(Cons B(Cons A Nil)))))
          Nil))
 
 -- KnockedForLoops: Loop of length 80 starting with a string of length 21
@@ -93,15 +118,21 @@ not x  = case x of
     False -> True
     True -> False
 
-data Sigma = A | B
+data Sigma = A | B | C
 
 eqSigma x y = case x of
     A -> case y of
         A -> True
         B -> False
+        C -> False
     B -> case y of
         A -> False
         B -> True
+        C -> False
+    C -> case y of
+        A -> False
+        B -> False
+        C -> True
 
 data List a = Nil | Cons a (List a)
 
@@ -206,10 +237,10 @@ base_ok rs c = case rs of
     RS us -> exists us ( \ u -> eqCls u c )
 
 extension_ok c o ss = case o of
-                 Overlap side pre suf c1 c2 -> 
-                    and2 ( exists ss ( \ s -> case s of OStep c o -> eqCls c c1 ) )
-                     ( and2 ( exists ss ( \ s -> case s of OStep c o -> eqCls c c2 ) )
-                        ( overlap_ok c o ) ) 
+    Overlap side pre suf c1 c2 -> 
+        and2 ( exists ss ( \ s -> case s of OStep c o -> eqCls c c1 ) )
+            ( and2 ( exists ss ( \ s -> case s of OStep c o -> eqCls c c2 ) )
+                ( overlap_ok c o ) ) 
 
 eqCls c1 c2 = case c1 of
       Rule l1 r1 -> case c2 of

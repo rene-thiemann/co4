@@ -25,7 +25,7 @@ data Step = Step { prefix :: List Sigma
 
 data OStep = OStep Rule Overlap 
 
-data Side = Left | Right
+data Side = Left | Right | Inside | Outside
 
 data Overlap = Overlap { side :: Side, pre :: Word, suf :: Word, c1 :: Rule, c2 :: Rule }
 
