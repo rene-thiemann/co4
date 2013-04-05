@@ -1,9 +1,9 @@
-{-# OPTIONS_CO4 SizedList Nat81 (SizedStep Nat17 Nat4 Nat4 Nat17) #-}
+{-# OPTIONS_CO4 SizedList Nat15 (SizedStep Nat10 Nat4 Nat4 Nat10) #-}
 
 -- should find the looping derivation
 -- abb -> bbaab -> bbabbaa
 
-main d = looping_derivation g10 d
+main d = looping_derivation g03 d
 
 -- rewriting system  ab -> bbaa.
 
@@ -32,6 +32,7 @@ g06 = RS
          Nil))
 
 -- KnockedForLoops: Loop of length 80 starting with a string of length 21
+{- # SizedList Nat81 (SizedStep Nat17 Nat4 Nat4 Nat17) #-}
 g10 = RS 
    (Cons (Rule (Cons A(Cons A(Cons A(Cons A Nil))))
                (Cons A(Cons B(Cons B(Cons B Nil)))))
