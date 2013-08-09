@@ -8,7 +8,7 @@ where
 
 import           Prelude hiding (and)
 import           System.IO (hFlush,stderr,hPutStrLn,hPutStr)
-import           Satchmo.Core.SAT.Minisat (note,solve')
+import           Satchmo.Core.SAT.Minisat (note,solveConfig,Config (..))
 import           Satchmo.Core.Decode (Decode,decode)
 import           Satchmo.Core.Primitive (Primitive,assert,and)
 import           CO4.Monad (CO4,SAT,runCO4)
@@ -31,7 +31,7 @@ solveAndTestP k allocator constraint test =
 solveP :: (Decode SAT EncodedAdt a, Encodeable k)
        => k -> Allocator -> ParamConstraintSystem -> IO (Maybe a)
 solveP k allocator constraint = 
-  solve' True $ do 
+  solveConfig [Verbose] $ do 
     (unknown,result) <- runCO4 $ do 
       unknown <- encode allocator
       param   <- encode k
@@ -50,7 +50,7 @@ solveAndTest allocator constraint test =
 -- |Solves a constraint system
 solve :: (Decode SAT EncodedAdt a) => Allocator -> ConstraintSystem -> IO (Maybe a)
 solve allocator constraint =
-  solve' True $ do 
+  solveConfig [Verbose] $ do 
     (unknown,result) <- runCO4 $ do 
       unknown <- encode allocator
       --note $ "Encoded unknown:\n" ++ show unknown

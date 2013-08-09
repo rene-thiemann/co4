@@ -2,23 +2,26 @@
 {-# LANGUAGE LambdaCase #-}
 module CO4.Monad
   ( CO4, SAT, newId, getCallStackTrace, isProfileRun, setProfileRun, abortWithTraces
-  , runCO4, withCallCache, withAdtCache, traced
+  , runCO4, withCallCache, withAdtCache, traced, checkBranch
   )
 where
 
 import           Control.Monad.State.Strict
-import qualified Satchmo.Core.SAT.Minisat 
+import qualified Satchmo.Core.SAT.Minisat as Minisat
 import           Satchmo.Core.MonadSAT (MonadSAT (..))
+import           Satchmo.Core.Primitive (select)
 import           CO4.Cache 
 import           CO4.Profiling
 import           CO4.Stack
-import {-# SOURCE #-} CO4.EncodedAdt (Primitive,EncodedAdt,makeWithStackTrace)
+import {-# SOURCE #-} CO4.EncodedAdt 
+import           CO4.Util (toBinary,bitWidth)
 
-type SAT          = Satchmo.Core.SAT.Minisat.SAT
+type SAT          = Minisat.SAT
 type AdtCacheKey  = (Primitive, [Primitive], [EncodedAdt])
 type CallCacheKey = (String, [EncodedAdt])
 type AdtCache     = Cache AdtCacheKey  Int
 type CallCache    = Cache CallCacheKey EncodedAdt
+type CaseStack    = Stack [Primitive]
 
 data CO4Data = CO4Data { 
     idCounter  :: ! Int
@@ -27,10 +30,11 @@ data CO4Data = CO4Data {
   , profile    :: ! Profile
   , callStack  :: ! CallStack
   , profileRun :: ! Bool
+  , caseStack  :: ! CaseStack 
   }
 
 emptyData :: CO4Data
-emptyData = CO4Data 0 emptyCache emptyCache emptyProfile emptyStack False
+emptyData = CO4Data 0 emptyCache emptyCache emptyProfile emptyStack False emptyStack
 
 newtype CO4 a = CO4 { unCO4 :: StateT CO4Data SAT a }
   deriving (Monad, MonadState CO4Data)
@@ -70,6 +74,12 @@ isProfileRun = gets profileRun
 
 setProfileRun :: CO4 ()
 setProfileRun = modify $! \c -> c { profileRun = True }
+
+onCaseStack :: (CaseStack -> CaseStack) -> CO4Data -> CO4Data
+onCaseStack f c = c { caseStack = f $ caseStack c }
+
+getAssumptions :: CO4 [Primitive]
+getAssumptions = gets $ concat . trace . caseStack
 
 abortWithTraces :: String -> [(String,String)] -> CO4 a
 abortWithTraces msg traces = do
@@ -155,3 +165,25 @@ traced name action = do
                       )
   modify $! onCallStack $! popFromStack
   return result
+
+-- zeitigerer Test auf zu wenige Variablen in der Diskriminante!!!
+checkBranch :: EncodedAdt -> Int -> CO4 EncodedAdt -> CO4 EncodedAdt
+checkBranch discriminant i branch = case flags discriminant of
+  Nothing -> return discriminant
+  Just fs | length fs < (bitWidth $ i + 1) -> return encEmpty
+  Just fs -> do
+    let branchAssumptions = zipWith select (toBinary (Just $ length fs) i) fs
+
+    allAssumptions <- getAssumptions >>= return . (++) branchAssumptions
+    check          <- liftSAT $ Minisat.checkAssumptions 
+                              [ Minisat.PropagationBudget 10
+                              , Minisat.ConflictBudget    10
+                              , Minisat.Assumptions       allAssumptions
+                              --, Minisat.Verbose
+                              ]
+    case check of
+      Just False -> {-liftSAT (Minisat.note "unreachable branch") >>-} return encEmpty
+      _          -> do modify $! onCaseStack $! pushToStack branchAssumptions
+                       result <- branch
+                       modify $! onCaseStack $! popFromStack
+                       return result

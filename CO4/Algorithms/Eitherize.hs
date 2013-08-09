@@ -25,7 +25,7 @@ import           CO4.Algorithms.Eitherize.EncEqInstance (encEqInstance)
 import           CO4.EncodedAdt 
   (EncodedAdt,encUndefined,isInvalid,encodedConstructor,caseOf,constructorArgument)
 import           CO4.Algorithms.HindleyMilner (schemes,schemeOfExp)
-import           CO4.Monad (CO4,withCallCache,traced)
+import           CO4.Monad (CO4,withCallCache,traced,checkBranch)
 import           CO4.AllocatorData (known)
 import           CO4.EncEq (encEq)
 import           CO4.Config (MonadConfig,is,Config(ImportPrelude,Profile,Cache))
@@ -149,8 +149,10 @@ instance (MonadUnique u,MonadConfig u) => MonadTHInstantiator (ExpInstantiator u
       instantiateMatches e'Name matches =
         getAdt >>= \case 
           Nothing  -> error "Algorithms.Eitherize.instantiateMatches: no ADT found"
-          Just adt -> zipWithM instantiateMatch [0..] $ dAdtConstructors adt
-        
+          Just adt -> --zipWithM instantiateMatch [0..] $ dAdtConstructors adt
+                      forM (zip [0..] $ dAdtConstructors adt) $ \(j,constructor) -> do
+            match' <- instantiateMatch j constructor
+            return $ appsE (TH.VarE 'checkBranch) [varE e'Name, intE j, match']
         where
           -- Default match
           defaultMatch = case last matches of m@(Match (PVar _) _) -> Just m

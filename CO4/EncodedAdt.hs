@@ -222,7 +222,7 @@ caseOfArguments adt branchArguments =
 
 toIntermediateAdt :: (Decode m Primitive Bool) => EncodedAdt -> Int -> m IntermediateAdt
 toIntermediateAdt adt _ | isConstantlyUndefined adt = return IntermediateUndefined 
-toIntermediateAdt Empty _                          = return IntermediateEmpty
+toIntermediateAdt Empty _                           = return IntermediateEmpty
 toIntermediateAdt (EncodedAdt _ definedness flags args _) n = 
   Exception.assert (length flags >= bitWidth n) $ do
     decode definedness >>= \case 
